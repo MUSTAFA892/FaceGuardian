@@ -1,5 +1,6 @@
 opencv-python 
-deepface 
 pymongo 
 flask 
 numpy
+python-dotenv
+bson
