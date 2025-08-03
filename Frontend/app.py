@@ -1,111 +1,71 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect
 from pymongo import MongoClient
-from pymongo.errors import PyMongoError
+from bson.binary import Binary
 from bson.objectid import ObjectId
 import base64
+import os
 import pickle
 from datetime import datetime
-import logging
-import os
+from collections import defaultdict
+import calendar
+from python_dotenv import load_dotenv
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+load_dotenv()
 
-app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.secret_key = 'your-secret-key'  # Required for flash messages
+app = Flask(__name__)
 
-# MongoDB Setup
-MONGO_URI = "mongodb+srv://mustafatinwala6:mustafa5253TINWALA@learningmongo.lof7x.mongodb.net/?retryWrites=true&w=majority&appName=LearningMongo"
-try:
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-    client.admin.command('ping')
-    db = client['CCTV_DB']
-    faces_col = db['faces']
-    encodings_col = db['known_encodings']
-    logger.info("Connected to MongoDB")
-except Exception as e:
-    logger.error(f"Failed to connect to MongoDB: {e}")
-    exit(1)
+# MongoDB setup
+MONGO_URI = os.getenv("MONGO_URI")
+client = MongoClient(MONGO_URI)
+db = client['CCTV_DB']
+collection = db['faces']
+encodings_col = db['encodings']
+
+# Helper to group faces and calculate statistics
+def group_faces_by_date():
+    grouped = defaultdict(list)
+    total_faces = 0
+    identified_faces = 0
+    
+    for doc in collection.find().sort("timestamp", -1):
+        date_str = doc["timestamp"].strftime("%A, %d %B %Y")
+        image_base64 = base64.b64encode(doc['image']).decode('utf-8')
+        
+        face_data = {
+            "id": str(doc['_id']),
+            "filename": doc['filename'],
+            "image": image_base64,
+            "name": doc.get("name", ""),
+            "timestamp": doc['timestamp'].strftime("%I:%M %p")
+        }
+        
+        grouped[date_str].append(face_data)
+        total_faces += 1
+        
+        # Count identified faces (those with names)
+        if doc.get("name") and doc.get("name").strip():
+            identified_faces += 1
+    
+    # Calculate statistics
+    stats = {
+        'total_faces': total_faces,
+        'identified_faces': identified_faces,
+        'total_days': len(grouped)
+    }
+    
+    return grouped, stats
 
 @app.route('/')
 def index():
-    try:
-        faces = []
-        for doc in faces_col.find().sort("timestamp", -1):
-            faces.append({
-                "id": str(doc['_id']),
-                "filename": doc['filename'],
-                "image": base64.b64encode(doc['image']).decode('utf-8'),
-                "name": doc.get("name", "Unknown"),
-                "timestamp": doc['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
-            })
-        return render_template('index.html', faces=faces)
-    except PyMongoError as e:
-        logger.error(f"Failed to fetch faces: {e}")
-        flash("Failed to load faces from database", "error")
-        return render_template('index.html', faces=[])
+    grouped_faces, stats = group_faces_by_date()
+    return render_template("index.html", grouped_faces=grouped_faces, stats=stats)
 
-@app.route('/rename', methods=['POST'])
-def rename():
-    try:
-        face_id = request.form.get('id')
-        new_name = request.form.get('name').strip()
-
-        if not face_id or not new_name:
-            flash("Missing ID or name", "error")
-            return redirect(url_for('index'))
-
-        try:
-            obj_id = ObjectId(face_id)
-        except:
-            flash("Invalid ID", "error")
-            return redirect(url_for('index'))
-
-        face_doc = faces_col.find_one({'_id': obj_id})
-        if not face_doc:
-            flash("Face not found", "error")
-            return redirect(url_for('index'))
-
-        # Update name in faces collection
-        faces_col.update_many({'name': face_doc['name']}, {'$set': {'name': new_name}})
-        
-        # Update or insert encoding in known_encodings
-        existing_encoding = encodings_col.find_one({'name': face_doc['name']})
-        if existing_encoding:
-            encodings_col.update_one({'name': face_doc['name']}, {'$set': {'name': new_name}})
-        else:
-            encoding = pickle.loads(face_doc["encoding"])
-            encodings_col.insert_one({
-                'name': new_name,
-                'encoding': Binary(pickle.dumps(encoding)),
-                'created_at': datetime.now()
-            })
-
-        flash("Name updated successfully", "success")
-        return redirect(url_for('index'))
-    except PyMongoError as e:
-        logger.error(f"Failed to rename face: {e}")
-        flash("Failed to rename face", "error")
-        return redirect(url_for('index'))
-
-# Kept for potential API use
-@app.route('/api/faces', methods=['GET'])
-def get_faces():
-    try:
-        faces = []
-        for doc in faces_col.find().sort("timestamp", -1):
-            faces.append({
-                "id": str(doc['_id']),
-                "filename": doc['filename'],
-                "image": base64.b64encode(doc['image']).decode('utf-8'),
-                "name": doc.get("name", "Unknown"),
-                "timestamp": doc['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
-            })
-        return jsonify(faces)
-    except PyMongoError as e:
-        logger.error(f"Failed to fetch faces: {e}")
-        return jsonify({"error": "Failed to fetch faces"}), 500
+@app.route('/delete', methods=['POST'])
+def delete_faces():
+    ids = request.form.getlist('selected_faces')
+    for face_id in ids:
+        collection.delete_one({'_id': ObjectId(face_id)})
+    return redirect('/')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True)

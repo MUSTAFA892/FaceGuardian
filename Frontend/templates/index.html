@@ -1,61 +1,591 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CCTV Face Recognition</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <title>Face Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideDown 0.8s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 1.1rem;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.3s forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .stats {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
+      text-align: center;
+      min-width: 120px;
+      box-shadow: 0 5px 20px rgba(255, 107, 107, 0.3);
+      transform: translateY(10px);
+      opacity: 0;
+      animation: slideUp 0.6s ease-out forwards;
+    }
+
+    .stat-item:nth-child(2) { animation-delay: 0.1s; }
+    .stat-item:nth-child(3) { animation-delay: 0.2s; }
+
+    @keyframes slideUp {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: 700;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .controls-section {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideUp 0.8s ease-out 0.2s both;
+    }
+
+    .select-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    button:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      color: white;
+      box-shadow: 0 5px 20px rgba(240, 147, 251, 0.3);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(240, 147, 251, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+      color: white;
+      box-shadow: 0 5px 20px rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(255, 107, 107, 0.4);
+    }
+
+    .date-section {
+      margin-bottom: 3rem;
+      animation: fadeInUp 0.6s ease-out both;
+    }
+
+    .date-section:nth-child(odd) { animation-delay: 0.1s; }
+    .date-section:nth-child(even) { animation-delay: 0.2s; }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .date-header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 15px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: sticky;
+      top: 2rem;
+      z-index: 10;
+    }
+
+    .date-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateY(10px);
+      opacity: 0;
+      animation: cardAppear 0.6s ease-out forwards;
+    }
+
+    .card:nth-child(odd) { animation-delay: 0.1s; }
+    .card:nth-child(even) { animation-delay: 0.2s; }
+    .card:nth-child(3n) { animation-delay: 0.3s; }
+
+    @keyframes cardAppear {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+      border-radius: 20px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .image-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: 15px;
+      margin-bottom: 1rem;
+    }
+
+    .card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 15px;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card:hover img {
+      transform: scale(1.1);
+    }
+
+    .face-info {
+      position: relative;
+      z-index: 2;
+    }
+
+    .timestamp {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.8;
+    }
+
+    .face-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .custom-checkbox {
+      position: relative;
+      display: inline-block;
+    }
+
+    .custom-checkbox input[type="checkbox"] {
+      opacity: 0;
+      position: absolute;
+    }
+
+    .checkmark {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .checkmark::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 7px;
+      width: 6px;
+      height: 10px;
+      border: 2px solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) scale(0);
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .custom-checkbox input[type="checkbox"]:checked + .checkmark::after {
+      transform: rotate(45deg) scale(1);
+    }
+
+    .custom-checkbox input[type="checkbox"]:checked + .checkmark {
+      background: linear-gradient(135deg, #51cf66, #40c057);
+      box-shadow: 0 2px 10px rgba(81, 207, 102, 0.4);
+    }
+
+    .checkbox-label {
+      font-size: 0.9rem;
+      color: #666;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .loading-skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .stats {
+        gap: 1rem;
+      }
+      
+      .select-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+      }
+      
+      .card {
+        padding: 1rem;
+      }
+    }
+
+    /* Smooth scroll behavior */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Selection highlight */
+    ::selection {
+      background: rgba(102, 126, 234, 0.3);
+    }
+
+    /* Focus styles for accessibility */
+    button:focus,
+    input:focus {
+      outline: 2px solid #667eea;
+      outline-offset: 2px;
+    }
+  </style>
+  <script>
+    // Enhanced toggle functionality with animations
+    function toggleAll(selectAll) {
+      const checkboxes = document.querySelectorAll('input[type=checkbox]');
+      checkboxes.forEach((cb, index) => {
+        setTimeout(() => {
+          cb.checked = selectAll;
+          // Trigger visual feedback
+          const card = cb.closest('.card');
+          if (card) {
+            card.style.transform = selectAll ? 'scale(0.98)' : 'scale(1)';
+            setTimeout(() => {
+              card.style.transform = '';
+            }, 150);
+          }
+        }, index * 50); // Stagger the animation
+      });
+    }
+
+    // Add loading states and interactions
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add click feedback to buttons
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          const ripple = document.createElement('span');
+          const rect = this.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height);
+          const x = e.clientX - rect.left - size / 2;
+          const y = e.clientY - rect.top - size / 2;
+          
+          ripple.style.cssText = `
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            background-color: rgba(255, 255, 255, 0.7);
+            width: ${size}px;
+            height: ${size}px;
+            left: ${x}px;
+            top: ${y}px;
+            pointer-events: none;
+          `;
+          
+          this.appendChild(ripple);
+          
+          setTimeout(() => {
+            ripple.remove();
+          }, 600);
+        });
+      });
+
+      // Add intersection observer for card animations
+      const cards = document.querySelectorAll('.card');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = 'running';
+          }
+        });
+      }, { threshold: 0.1 });
+
+      cards.forEach(card => observer.observe(card));
+    });
+
+    // CSS for ripple effect
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ripple {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </head>
 <body>
-    <div class="container mt-4">
-        <h1 class="text-center mb-4">CCTV Face Recognition</h1>
-
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Face Grid -->
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {% for face in faces %}
-                <div class="col">
-                    <div class="card h-100 shadow-sm">
-                        <img src="data:image/jpeg;base64,{{ face.image }}" class="card-img-top" alt="{{ face.name }}" style="height: 200px; object-fit: cover;">
-                        <div class="card-body">
-                            <h5 class="card-title">Name: {{ face.name }}</h5>
-                            <p class="card-text">Timestamp: {{ face.timestamp }}</p>
-                            <form action="{{ url_for('rename') }}" method="POST" class="mt-2">
-                                <input type="hidden" name="id" value="{{ face.id }}">
-                                <div class="input-group">
-                                    <input type="text" name="name" class="form-control" placeholder="Enter new name" required minlength="1" maxlength="50">
-                                    <button type="submit" class="btn btn-primary">Rename</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <div class="col">
-                    <p class="text-muted text-center">No faces detected yet.</p>
-                </div>
-            {% endfor %}
+  <div class="container">
+    <div class="header">
+      <h1>📷 Face Recognition Dashboard</h1>
+      <p class="subtitle">Manage and organize your captured faces with ease</p>
+      
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-number">{{ stats.total_faces }}</span>
+          <span class="stat-label">Total Faces</span>
         </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ stats.identified_faces }}</span>
+          <span class="stat-label">Identified</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ stats.total_days }}</span>
+          <span class="stat-label">Days</span>
+        </div>
+      </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Auto-refresh every 5 seconds
-        setInterval(() => {
-            window.location.reload();
-        }, 5000);
-    </script>
+    <form method="POST" action="/delete">
+      <div class="controls-section">
+        <div class="select-controls">
+          <button type="button" class="btn-primary" onclick="toggleAll(true)">
+            ✓ Select All
+          </button>
+          <button type="button" class="btn-secondary" onclick="toggleAll(false)">
+            ✗ Deselect All
+          </button>
+          <button type="submit" class="btn-danger">
+            🗑️ Delete Selected
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic content from Flask app -->
+      {% for date, faces in grouped_faces.items() %}
+        <div class="date-section">
+          <div class="date-header">
+            <h2 class="date-title">📅 {{ date }}</h2>
+          </div>
+          <div class="gallery">
+            {% for face in faces %}
+            <div class="card">
+              <div class="image-container">
+                <img src="data:image/jpeg;base64,{{ face.image }}" alt="Face">
+              </div>
+              <div class="face-info">
+                <div class="timestamp">{{ face.timestamp }}</div>
+                <div class="face-name">{{ face.name or "Unknown" }}</div>
+                <div class="checkbox-container">
+                  <label class="custom-checkbox">
+                    <input type="checkbox" name="selected_faces" value="{{ face.id }}">
+                    <span class="checkmark"></span>
+                  </label>
+                  <span class="checkbox-label">Select</span>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </form>
+  </div>
 </body>
 </html>
