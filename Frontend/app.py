@@ -69,4 +69,4 @@ def delete_faces():
 
 if __name__ == '__main__':
     PORT = int(os.getenv("PORT", 5000))
-    app.run(debug=True,port=PORT)
+    app.run(debug=False,host='0.0.0.0',port=PORT)
