@@ -1,158 +1,167 @@
-📹 **CCTV Face Recognition System using RTSP, OpenCV, DeepFace, and Flask**
+# 🎩 CCTV Face Recognition System using RTSP, OpenCV, DeepFace, and Flask
 
-This project enables real-time face detection and recognition from an RTSP-enabled IP camera feed using Python + OpenCV + DeepFace. It stores detected faces and their encodings in MongoDB Atlas and provides a responsive Flask-based web interface for viewing and renaming faces. The system is configured to work on a JioFiber network, with support for local access and optional port forwarding for remote access.
+This project enables real-time face detection from an RTSP-enabled IP camera feed using Python, OpenCV, and DeepFace. It stores detected face snapshots in MongoDB Atlas and provides a responsive Flask-based web interface for browsing them. Designed to run on a JioFiber home network with optional port forwarding.
 
-🔧 **Features**
+---
 
-* 📡 **Live RTSP Streaming:** Access live camera feed via RTSP protocol.
-* 🧠 **Face Detection & Recognition:** Uses DeepFace (RetinaFace backend) for accurate face detection and recognition, reducing false positives (e.g., clothes misidentified as faces).
-* 💾 **MongoDB Storage:** Stores face images, encodings, and metadata (name, timestamp) in MongoDB Atlas.
-* 🌐 **Responsive Web Interface:** Flask-based frontend with Bootstrap 5 for viewing faces, renaming them, and displaying success/error messages.
-* 🔄 **Auto-Refresh:** Web interface refreshes every 5 seconds to display new faces.
-* 📶 **JioFiber Network Setup:** Instructions for local network access and port forwarding for remote viewing.
-* 🛠️ **Robust Error Handling:** Comprehensive logging and user feedback for camera, database, and processing errors.
-* 🖼️ **Image Quality Filtering:** Selects sharp, high-confidence face images for storage.
+## 🔧 Features
 
-🧠 **Project Overview**
+- 📱 **Live RTSP Feed Access**: Captures real-time video from an IP camera over RTSP.
+- 🧠 **Accurate Face Detection (DeepFace)**: RetinaFace model ensures high-accuracy face localization and avoids false positives.
+- 📅 **Smart Storage to MongoDB**: Stores only 3–4 clear frames per face with timestamps.
+- 🌐 **Responsive Flask Web UI**:
+  - View detected faces sorted by **day, time, and week**.
+  - **Select / Deselect all** and **bulk delete** faces.
+  - Auto-refresh every 5 seconds.
+- 📀 **Image Quality Filtering**: Only clear, front-facing frames are selected for storage.
+- 📅 **Timestamped Faces**: Sorted by detection time, helpful for tracking.
+- 🌎 **JioFiber-Compatible Setup**: With instructions for RTSP access and router configuration.
 
-This repo guides you through:
+---
 
-* Accessing the RTSP feed from an IP camera in the local network.
-* Performing real-time face detection and recognition using DeepFace and OpenCV.
-* Storing and managing face data in MongoDB Atlas.
-* Serving a Flask web interface to view and rename detected faces.
-* Configuring JioFiber router port forwarding for remote access.
-* Troubleshooting common issues with RTSP, MongoDB, and network setup.
+## 🧠 System Architecture
 
-🖥️ **Face Recognition System**
-The system consists of two main components:
+**Backend:** `main.py`
+- Captures frames via OpenCV from RTSP stream
+- Uses `DeepFace` (RetinaFace) for face detection
+- Stores selected face images in MongoDB Atlas (3-4 clearest frames per detection)
 
-* **Backend (main.py):** Captures the RTSP feed, detects and recognizes faces using DeepFace, and stores face images and encodings in MongoDB Atlas.
-* **Frontend (app.py):** Serves a Flask-based web interface to display detected faces, allowing users to rename them with persistent updates to the database.
+**Frontend:** `app.py`
+- Flask server displays detected faces
+- Allows deletion (single/bulk)
+- Sorts faces by date, week, and time
 
-🏠 **Local Network Setup**
+---
 
-1. Find your camera’s local IP address (e.g., 192.168.29.7).
-2. Verify the RTSP port, usually 554, sometimes 8000, via the camera's LAN settings.
-3. Test the camera feed using VLC or the provided Python script on the same local network.
+## 🏠 Local Network Setup
 
-🌐 **JioFiber Router - Port Forwarding**
+1. **Find camera IP** (e.g., `192.168.29.7`) in router settings
+2. Use an RTSP-compatible camera and ensure it's broadcasting (usually port 554)
+3. Test with VLC: `rtsp://admin:yourpassword@192.168.29.7:554`
 
-1. **Accessing JioFiber Dashboard:**
+---
 
-   * Go to: [http://192.168.29.1](http://192.168.29.1)
-   * Login:
+## 🚀 JioFiber Port Forwarding (Optional)
 
-     * Username: admin
-     * Password: Jiocentrum (default, if not changed)
-2. **Add Port Forwarding:**
+1. Login to [http://192.168.29.1](http://192.168.29.1)
+   - Username: `admin`
+   - Password: `Jiocentrum` (default)
 
-   * Navigate to Applications → Port Forwarding.
-   * Add a new rule:
+2. Go to `Applications > Port Forwarding`
+3. Create rule:
+   - Protocol: TCP
+   - External & Internal Port: `554` or your RTSP port
+   - Internal IP: your camera's IP (e.g., `192.168.29.7`)
 
-     * Name: RTSP
-     * Protocol: TCP
-     * Port: 554 or 8000 (match your camera setting)
-     * Internal IP: Your camera’s IP (192.168.29.7)
-   * Save and reboot router if necessary.
+---
 
-🌐 **Understanding IPs and Routing**
+## 🔹 IP Address Types
 
-| Type         | Example      | Description                                               |
-| ------------ | ------------ | --------------------------------------------------------- |
-| 📍 Local IP  | 192.168.29.7 | IP given to your camera by the router (internal use only) |
-| 🌎 Public IP | 49.xx.xx.xx  | Your JioFiber connection’s external IP (seen on internet) |
-| 📦 Router    | 192.168.29.1 | Gateway that manages traffic between local and internet   |
+| Type         | Example      | Purpose                                   |
+|--------------|--------------|-------------------------------------------|
+| Local IP     | 192.168.29.7 | Internal network use                      |
+| Router IP    | 192.168.29.1 | Gateway to internet                       |
+| Public IP    | 49.xx.xx.xx  | Used for remote access (if port forwarded)|
 
-**How It Connects**
+---
 
-* Your router assigns local IPs to devices (camera, laptop).
-* The camera exposes an RTSP feed at a port (e.g., 554).
-* The backend script accesses it via the local IP.
-* For external access, port forwarding maps public IP traffic to the camera.
-
-💿 **Setup Instructions**
-
-**Prerequisites**
-
-* Python 3.8+
-* MongoDB Atlas account with a cluster (URI provided in code)
-* RTSP-enabled IP camera (e.g., with URL rtsp\://admin\:ZWTMVH\@192.168.29.7:554/)
-* JioFiber router for network configuration
-
-**Directory Structure**
+## 🔹 Directory Structure
 
 ```
 project/
-├── main.py              # Video processing and face detection
-├── app.py               # Flask API and frontend
+├── main.py              # Real-time video processing and face capture
+├── app.py               # Flask frontend server
 ├── templates/
-│   └── index.html      # Frontend template with Bootstrap
+│   └── index.html       # Web UI with Bootstrap 5 and JS
 ├── static/
-│   └── styles.css      # Custom CSS for styling
-├── detected_faces/      # Directory for saving face images
+│   └── styles.css       # Optional: custom styles
+├── detected_faces/      # Optional: saved image backup
 ├── requirements.txt     # Python dependencies
-└── README.md           # Project documentation
+└── README.md            # This file
 ```
 
-**Installation**
+---
 
-1. Clone the repository:
+## 🎓 Prerequisites
 
-   ```
-   git clone <repository-url>
+- Python 3.8+
+- MongoDB Atlas account (free cluster is fine)
+- IP camera with RTSP enabled
+- JioFiber router (optional for port forwarding)
+
+---
+
+## 🔧 Installation & Setup
+
+1. Clone the repo:
+   ```bash
+   git clone <your-repo-url>
    cd project
    ```
-2. Install dependencies:
-
-   ```
+2. Install Python packages:
+   ```bash
    pip install -r requirements.txt
    ```
+3. Set MongoDB URI in both `main.py` and `app.py`
+4. Verify your camera RTSP URL in `main.py`
 
-**Contents of `requirements.txt`:**
+---
 
-* opencv-python
-* deepface
-* pymongo
-* flask
-* numpy
+## 🚪 Running the Application
 
-3. Ensure MongoDB Atlas is configured with the provided URI.
-4. Verify the RTSP URL in `main.py` matches your camera's settings.
-
-**Running the Application**
-
-1. Start the backend for face detection and storage:
-
-   ```
+1. **Start the video processor** (captures faces):
+   ```bash
    python main.py
    ```
-2. Start the Flask web server for the frontend:
-
-   ```
+2. **Start the Flask server** (to view faces):
+   ```bash
    python app.py
    ```
-3. Access the web interface at [http://localhost:5000](http://localhost:5000).
+3. Open your browser at [http://localhost:5000](http://localhost:5000)
 
-💡 **Notes & Debugging Tips**
+---
 
-* **RTSP Issues:** Test the RTSP feed with VLC (Media → Open Network Stream). Try alternate ports (554 or 8000) if the feed fails. Ensure the camera IP and credentials are correct.
-* **MongoDB Issues:** Verify the MongoDB Atlas URI and network access (whitelist your IP). Check for connection errors in logs.
-* **Web Interface:** The interface auto-refreshes every 5 seconds. Adjust the interval in `index.html` if needed. Ensure names are 1-50 characters for renaming.
-* **Port Forwarding:** Restart the router and camera after changing configurations. If port 554 is blocked, try an alternate port and update the camera settings.
+## 📆 Features on the Web Interface
 
-📌 **Final Checklist**
+- Live updates (every 5s)
+- Day, week, and date grouping
+- Image previews with timestamp
+- Select individual or all images
+- Bulk delete selected images
 
-* ✅ Confirm camera IP and RTSP port (554 or 8000)
-* ✅ Validate RTSP feed in local network using VLC
-* ✅ Set up MongoDB Atlas with correct URI
-* ✅ Install dependencies and run `main.py` and `app.py`
-* ✅ Configure JioFiber port forwarding for remote access (if needed)
-* ✅ Keep JioFiber dashboard login handy (admin / Jiocentrum)
+---
 
-🧾 **Credits & Author**
-Maintained by Mustafa Tinwala
-Built for personal learning and CCTV face recognition experiments using open technologies.
+## 📓 requirements.txt
 
-📎 **License**
-MIT License - free to use, modify, and share.
+```
+Flask==2.3.3
+opencv-python==4.9.0.80
+deepface==0.40.1
+pymongo==4.6.1
+numpy==1.26.4
+```
+
+---
+
+## 🔎 Debugging Tips
+
+- **RTSP Not Working?**
+  - Use VLC to verify stream
+  - Check credentials and IP
+- **No Faces Detected?**
+  - Make sure lighting is good and camera is working
+  - Try printing DeepFace output confidence scores
+- **MongoDB Issues?**
+  - Make sure IP is whitelisted
+  - Double-check Mongo URI
+
+---
+
+## 👤 Author
+**Mustafa Tinwala**
+- GitHub: [@mustafatinwala](https://github.com/mustafatinwala)
+
+---
+
+## 📚 License
+MIT License — Free to use, modify, and share.
