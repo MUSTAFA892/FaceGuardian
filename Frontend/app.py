@@ -8,7 +8,7 @@ import pickle
 from datetime import datetime
 from collections import defaultdict
 import calendar
-from python_dotenv import load_dotenv
+from dotenv import load_dotenv
 
 load_dotenv()
 

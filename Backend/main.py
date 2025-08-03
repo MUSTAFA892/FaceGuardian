@@ -6,6 +6,9 @@ import uuid
 import time
 from pymongo import MongoClient
 from bson.binary import Binary
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # MongoDB Setup
 MONGO_URI = os.getenv("MONGO_URI")
