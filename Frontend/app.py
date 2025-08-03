@@ -68,4 +68,5 @@ def delete_faces():
     return redirect('/')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    PORT = int(os.getenv("PORT", 5000))
+    app.run(debug=True,port=PORT)
